@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Kaa.ServiceDemo.Service
 {
-    public class TestService : IHostedService
+    public class TestService : IHostedService,IDisposable
     {
         private int n = 0;
         private bool open = false;
@@ -42,6 +42,11 @@ namespace Kaa.ServiceDemo.Service
             _log.LogInformation("TestService Stop");
             open = false;
             return Task.CompletedTask;
+        }
+
+        public void Dispose()
+        {
+            _log.LogInformation("TestService Dispose");
         }
     }
 }
