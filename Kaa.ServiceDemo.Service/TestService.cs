@@ -20,21 +20,26 @@ namespace Kaa.ServiceDemo.Service
             _print = print;
             _log = log;
         }
-        public async Task Doing(CancellationToken cancellationToken)
+        public Task Doing(CancellationToken cancellationToken)
         {
-            while (open)
-            {
-                _print.Print((n++) + "TestService Doing...");
-                Thread.Sleep(1000);
-            }
-            await Task.CompletedTask;
+            return Task.Run(() => {
+                _print.Print((n++) + $"TestService Start... cancellationToken.CanBeCanceled:{cancellationToken.CanBeCanceled}");
+                while (open && cancellationToken.CanBeCanceled)
+                {
+                    _print.Print((n++) + $"TestService Doing... cancellationToken.CanBeCanceled:{cancellationToken.CanBeCanceled}");
+                    Thread.Sleep(1000);
+                }
+                _print.Print((n++) + $"TestService Stop... cancellationToken.CanBeCanceled:{cancellationToken.CanBeCanceled}");
+            });
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _log.LogInformation("TestService start");
             open = true;
-            return Doing(cancellationToken);
+            Doing(cancellationToken);
+
+            return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

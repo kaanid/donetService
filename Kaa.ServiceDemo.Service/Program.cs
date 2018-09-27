@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using System.Runtime.Loader;
 
 namespace Kaa.ServiceDemo.Service
 {
@@ -13,6 +14,16 @@ namespace Kaa.ServiceDemo.Service
     {
         static void Main(string[] args)
         {
+            Console.CancelKeyPress += (sender, e) => {
+                Console.WriteLine("Console.CancelKeyPress");
+            };
+            AppDomain.CurrentDomain.ProcessExit += (sender, e) => {
+                Console.WriteLine("AppDomain.CurrentDomain.ProcessExit");
+            };
+            AssemblyLoadContext.Default.Unloading += (sender) => {
+                Console.WriteLine("AssemblyLoadContext.Default.Unloading");
+            };
+
             var builder = new HostBuilder()
                 .UseConsoleLifetime()
                 .UseServiceProviderFactory(new AspectCoreServiceProviderFactory())
@@ -40,10 +51,22 @@ namespace Kaa.ServiceDemo.Service
 
             //builder.Run();
 
-            builder.RunAsync().GetAwaiter().GetResult();
+            using (var source = new CancellationTokenSource())
+            {
+                builder.RunAsync(source.Token);
+                //builder.WaitForShutdownAsync(source.Token);
+                //builder.RunAsync(source.Token).GetAwaiter().GetResult();
 
-            Console.WriteLine("..................");
-            Console.ReadKey();
+                
+                Console.WriteLine("..................");
+
+                //builder.WaitForShutdown();
+                //Console.ReadKey();
+                source.Cancel();
+
+
+                Console.ReadKey();
+            }
         }
 
 
